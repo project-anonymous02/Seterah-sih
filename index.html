@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NATA Comments - Discussion Board</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .comment-form {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .comments-section {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .comment-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .comment-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .comment-author {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .comment-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .comment-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            word-wrap: break-word;
+        }
+
+        .comment-footer {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .vote-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .vote-btn:hover {
+            color: #764ba2;
+        }
+
+        .upvote-count {
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-state h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 NATA Comments</h1>
+            <p>Saling tukar pendapat, debat, filosofi</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <span class="status-indicator status-online"></span>
+            <span id="commentCount">Memuat...</span>
+        </div>
+
+        <div class="comment-form">
+            <h2 style="margin-bottom: 20px; color: #333;">Tambah Komentar</h2>
+            <form id="commentForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        placeholder="Nama kamu" 
+                        required
+                        value="Anon"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="content">Komentar</label>
+                    <textarea 
+                        id="content" 
+                        placeholder="Tulis pendapat, debat, atau filosofi mu di sini..." 
+                        required
+                    ></textarea>
+                </div>
+                <button type="submit" class="btn" id="submitBtn">Kirim Komentar</button>
+            </form>
+        </div>
+
+        <div class="comments-section" id="commentsList">
+            <div class="loading">⏳ Memuat komentar...</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://wnbgbysecuijrfuawjlp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndubmdieXNlY3VpanJmdWF3amxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk4MDEwODcsImV4cCI6MjAzNTM3NzA4N30.xCfFJVN5fmqRWwNbVr9Z0_vDNcMlJ6yTzI4ZXSmDGEQ';
+        
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Load comments
+        async function loadComments() {
+            try {
+                const { data, error } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayComments(data);
+                updateStats(data.length);
+            } catch (error) {
+                console.error('Error loading comments:', error);
+                document.getElementById('commentsList').innerHTML = 
+                    '<div class="error">❌ Error loading comments: ' + error.message + '</div>';
+            }
+        }
+
+        // Display comments
+        function displayComments(comments) {
+            const container = document.getElementById('commentsList');
+            
+            if (comments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Belum ada komentar</h2>
+                        <p>Jadilah yang pertama berbagi pendapat! 💭</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = comments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author">👤 ${escapeHtml(comment.username)}</span>
+                        <span class="comment-time">${formatDate(comment.created_at)}</span>
+                    </div>
+                    <div class="comment-content">
+                        ${escapeHtml(comment.content).replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="comment-footer">
+                        <button class="vote-btn" onclick="upvoteComment('${comment.id}')">
+                            👍 <span class="upvote-count">${comment.upvotes || 0}</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Submit comment
+        document.getElementById('commentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!username || !content) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Mengirim...';
+
+            try {
+                const { error } = await supabase
+                    .from('comments')
+                    .insert([{ username, content, upvotes: 0 }]);
+
+                if (error) throw error;
+
+                document.getElementById('commentForm').reset();
+                document.getElementById('username').value = 'Anon';
+                await loadComments();
+            } catch (error) {
+                console.error('Error submitting comment:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ Kirim Komentar';
+            }
+        });
+
+        // Upvote comment
+        async function upvoteComment(id) {
+            try {
+                const { data } = await supabase
+                    .from('comments')
+                    .select('upvotes')
+                    .eq('id', id)
+                    .single();
+
+                const newUpvotes = (data?.upvotes || 0) + 1;
+
+                const { error } = await supabase
+                    .from('comments')
+                    .update({ upvotes: newUpvotes })
+                    .eq('id', id);
+
+                if (error) throw error;
+                await loadComments();
+            } catch (error) {
+                console.error('Error upvoting:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats(count) {
+            document.getElementById('stats').innerHTML = `
+                <span class="status-indicator status-online"></span>
+                <span id="commentCount">📊 ${count} komentar</span>
+            `;
+        }
+
+        // Format date
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Baru saja';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            return date.toLocaleDateString('id-ID');
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Listen for real-time updates
+        supabase
+            .channel('comments')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'comments' },
+                (payload) => {
+                    console.log('Real-time update:', payload);
+                    loadComments();
+                }
+            )
+            .subscribe();
+
+        // Initial load
+        loadComments();
+    </script>
+</body>
+</html>
