@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexThread – The Future of Discussion</title>
+    <style>
+        /* ========== RESET & GLOBAL ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a12;
+            color: #e4e4f0;
+            line-height: 1.6;
+        }
+        a {
+            color: #00bfff;
+            text-decoration: none;
+        }
+        button {
+            cursor: pointer;
+            font: inherit;
+        }
+        input,
+        textarea,
+        button {
+            outline: none;
+        }
+        /* ========== SCROLLBAR ========== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #14141e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a3a4a;
+            border-radius: 4px;
+        }
+
+        /* ========== NAVBAR ========== */
+        #navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: rgba(16, 16, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #2a2a3a;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .nav-left h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00bfff, #8a2be2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .nav-center {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+        .nav-center input {
+            width: 100%;
+            padding: 8px 18px;
+            border-radius: 24px;
+            border: 1px solid #2a2a3a;
+            background: #14141e;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .nav-center input:focus {
+            border-color: #00bfff;
+            box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.15);
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-right button {
+            background: #2a2a3a;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .nav-right button:hover {
+            background: #3a3a4a;
+        }
+        #user-menu {
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+        #username-display {
+            color: #00bfff;
+            font-weight: 500;
+        }
+        #logout-btn {
+            background: #4a2a3a;
+        }
+        #logout-btn:hover {
+            background: #6a2a4a;
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        #main-content {
+            display: flex;
+            max-width: 1280px;
+            margin: 24px auto;
+            gap: 24px;
+            padding: 0 20px;
+        }
+
+        /* ========== SIDEBAR ========== */
+        #sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 80px;
+            align-self: flex-start;
+        }
+        #sidebar button {
+            width: 100%;
+            padding: 10px 16px;
+            background: #00bfff;
+            border: none;
+            border-radius: 24px;
+            color: #0a0a12;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            transition: 0.2s;
+        }
+        #sidebar button:hover {
+            background: #33ccff;
+            transform: scale(1.02);
+        }
+        #sidebar ul {
+            list-style: none;
+        }
+        #sidebar li {
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            color: #a0a0b0;
+        }
+        #sidebar li:hover {
+            background: #1a1a2a;
+            color: #fff;
+        }
+        #sidebar li.active {
+            background: #1a1a2a;
+            color: #00bfff;
+        }
+
+        /* ========== FEED ========== */
+        #feed {
+            flex: 1;
+            min-width: 0;
+        }
+        #loading-indicator {
+            text-align: center;
+            color: #666;
+            padding: 40px 0;
+        }
+
+        /* ========== THREAD CARD ========== */
+        .thread-card {
+            background: #14141e;
+            border: 1px solid #242436;
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .thread-card:hover {
+            border-color: #3a4a5a;
+            background: #18182a;
+        }
+        .thread-card h3 {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .thread-card .excerpt {
+            color: #b0b0c0;
+            font-size: 0.95rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .thread-card .meta {
+            margin-top: 10px;
+            display: flex;
+            gap: 16px;
+            color: #8888a0;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .thread-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ========== MODALS ========== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: #18182a;
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 540px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid #2a2a3a;
+        }
+        .modal-content.large {
+            max-width: 720px;
+        }
+        .modal-content .close {
+            position: absolute;
+            top: 14px;
+            right: 20px;
+            font-size: 26px;
+            color: #888;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-content .close:hover {
+            color: #fff;
+        }
+        .modal-content h2 {
+            margin-bottom: 16px;
+            font-size: 1.5rem;
+        }
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-content input,
+        .modal-content textarea {
+            padding: 10px 14px;
+            background: #0e0e1a;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            width: 100%;
+        }
+        .modal-content input:focus,
+        .modal-content textarea:focus {
+            border-color: #00bfff;
+        }
+        .modal-content textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .modal-content button[type="submit"] {
+            background: #00bfff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            color: #0a0a12;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: 0.2s;
+            align-self: flex-start;
+        }
+        .modal-content button[type="submit"]:hover {
+            background: #33ccff;
+        }
+        #auth-switch {
+            margin-top: 14px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        #auth-switch a {
+            color: #00bfff;
+            cursor: pointer;
+        }
+        #auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== THREAD VIEW ========== */
+        #thread-view-content {
+            margin-bottom: 20px;
+        }
+        #thread-view-content h2 {
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+        #thread-view-content .thread-body {
+            white-space: pre-wrap;
+            color: #c0c0d0;
+            margin: 12px 0;
+        }
+        #thread-view-content .thread-meta {
+            color: #8888a0;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ========== COMMENTS ========== */
+        #comment-tree {
+            margin: 16px 0;
+        }
+        .comment {
+            padding: 12px 0;
+            border-bottom: 1px solid #1e1e2e;
+        }
+        .comment .comment-header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #8888a0;
+        }
+        .comment .comment-header strong {
+            color: #e0e0f0;
+        }
+        .comment .comment-body {
+            margin: 4px 0 8px 0;
+            color: #d0d0e0;
+        }
+        .comment .comment-actions {
+            display: flex;
+            gap: 14px;
+            font-size: 0.8rem;
+        }
+        .comment .comment-actions button {
+            background: transparent;
+            border: none;
+            color: #8888a0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            transition: 0.2s;
+        }
+        .comment .comment-actions button:hover {
+            background: #2a2a3a;
+            color: #fff;
+        }
+        .comment .replies {
+            margin-left: 32px;
+            border-left: 2px solid #2a2a3a;
+            padding-left: 16px;
+        }
+        #comment-form {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        #comment-form textarea {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            background: #0e0e1a;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            color: #fff;
+            resize: vertical;
+            font-family: inherit;
+        }
+        #comment-form button {
+            background: #00bfff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-weight: 600;
+            color: #0a0a12;
+        }
+
+        /* ========== NOTIFICATIONS / MESSAGES (simple) ========== */
+        .notif-item,
+        .msg-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1e1e2e;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .notif-item:hover,
+        .msg-item:hover {
+            background: #1a1a2a;
+        }
+        .notif-item .notif-time,
+        .msg-item .msg-time {
+            color: #666;
+            font-size: 0.75rem;
+            float: right;
+        }
+        .notif-item.unread {
+            border-left: 3px solid #00bfff;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            #main-content {
+                flex-direction: column;
+                padding: 0 12px;
+            }
+            #sidebar {
+                width: 100%;
+                position: static;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            #sidebar button {
+                width: auto;
+                flex: 1;
+            }
+            #sidebar ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            #sidebar li {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            .nav-center {
+                margin: 0 10px;
+            }
+            .nav-center input {
+                width: 100%;
+            }
+            .modal-content {
+                padding: 20px;
+                max-width: 100%;
+            }
+        }
+        @media (max-width: 480px) {
+            #navbar {
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 8px 12px;
+            }
+            .nav-left h1 {
+                font-size: 1.2rem;
+            }
+            .nav-right button {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav id="navbar">
+        <div class="nav-left"><h1>NexThread</h1></div>
+        <div class="nav-center">
+            <input type="text" id="search-input" placeholder="Search threads, people..." />
+        </div>
+        <div class="nav-right">
+            <div id="auth-buttons">
+                <button id="login-btn">Login</button>
+                <button id="register-btn">Register</button>
+            </div>
+            <div id="user-menu">
+                <span id="username-display"></span>
+                <button id="notif-btn" title="Notifications">🔔</button>
+                <button id="msg-btn" title="Messages">✉️</button>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== MAIN ===== -->
+    <div id="main-content">
+        <aside id="sidebar">
+            <button id="new-thread-btn">+ New Thread</button>
+            <ul id="sidebar-menu">
+                <li data-tag="all" class="active">🏠 All</li>
+                <li data-tag="tech">💻 Tech</li>
+                <li data-tag="gaming">🎮 Gaming</li>
+                <li data-tag="life">🌱 Life</li>
+                <li data-tag="news">📰 News</li>
+            </ul>
+        </aside>
+        <section id="feed">
+            <div id="threads-container"></div>
+            <div id="loading-indicator">Loading threads...</div>
+        </section>
+    </div>
+
+    <!-- ===== MODALS ===== -->
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="auth-modal">&times;</span>
+            <h2 id="auth-title">Login</h2>
+            <form id="auth-form">
+                <input type="email" id="auth-email" placeholder="Email" required />
+                <input type="password" id="auth-password" placeholder="Password" required />
+                <div id="auth-extra" style="display:none;">
+                    <input type="text" id="auth-username" placeholder="Username" required />
+                </div>
+                <button type="submit" id="auth-submit">Login</button>
+            </form>
+            <p id="auth-switch">Don't have an account? <a id="auth-toggle">Register</a></p>
+        </div>
+    </div>
+
+    <!-- Create Thread Modal -->
+    <div id="thread-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="thread-modal">&times;</span>
+            <h2>Create Thread</h2>
+            <form id="thread-form">
+                <input type="text" id="thread-title" placeholder="Title" required />
+                <textarea id="thread-content" placeholder="What's on your mind?" required></textarea>
+                <input type="text" id="thread-tags" placeholder="Tags (comma separated)" />
+                <button type="submit">Post</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thread View Modal -->
+    <div id="thread-view-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" data-close="thread-view-modal">&times;</span>
+            <div id="thread-view-content"></div>
+            <hr style="border-color:#2a2a3a; margin:16px 0;" />
+            <h3>Comments</h3>
+            <div id="comment-tree"></div>
+            <form id="comment-form">
+                <textarea id="comment-content" placeholder="Write a comment..." required></textarea>
+                <button type="submit">Reply</button>
+            </form>
+            <p style="font-size:0.8rem; color:#666; margin-top:8px;" id="reply-indicator"></p>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notif-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="notif-modal">&times;</span>
+            <h2>Notifications</h2>
+            <button id="mark-all-read" style="background:#2a2a3a; border:none; padding:4px 12px; border-radius:12px; color:#fff; margin-bottom:12px;">Mark all read</button>
+            <div id="notif-list"></div>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div id="msg-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" data-close="msg-modal">&times;</span>
+            <h2>Messages</h2>
+            <div id="msg-conversations"></div>
+            <hr style="border-color:#2a2a3a; margin:12px 0;" />
+            <div id="msg-chat" style="display:none;">
+                <div id="msg-messages" style="max-height:300px; overflow-y:auto; margin-bottom:10px;"></div>
+                <form id="msg-form" style="display:flex; gap:8px;">
+                    <input type="text" id="msg-input" placeholder="Type a message..." style="flex:1;" />
+                    <button type="submit" style="background:#00bfff; border:none; padding:6px 16px; border-radius:20px; font-weight:600;">Send</button>
+                </form>
+                <button id="msg-back" style="background:#2a2a3a; border:none; padding:4px 12px; border-radius:12px; color:#fff; margin-top:6px;">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal (optional) -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-close="admin-modal">&times;</span>
+            <h2>Admin Dashboard</h2>
+            <div id="admin-stats"></div>
+            <hr style="border-color:#2a2a3a; margin:12px 0;" />
+            <div id="admin-reports"></div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- STATE ----------
+            let currentUser = null;
+            let token = localStorage.getItem('token') || null;
+            let currentThreadId = null;
+            let activeTag = 'all';
+            let msgTargetUserId = null;
+
+            // ---------- DOM REFS ----------
+            const $ = id => document.getElementById(id);
+            const feed = $('threads-container');
+            const loading = $('loading-indicator');
+            const authModal = $('auth-modal');
+            const threadModal = $('thread-modal');
+            const threadViewModal = $('thread-view-modal');
+            const notifModal = $('notif-modal');
+            const msgModal = $('msg-modal');
+            const adminModal = $('admin-modal');
+
+            // ---------- API HELPERS ----------
+            async function api(method, path, body = null, requiresAuth = true) {
+                const opts = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (body) opts.body = JSON.stringify(body);
+                if (requiresAuth && token) {
+                    opts.headers['Authorization'] = `Bearer ${token}`;
+                }
+                const res = await fetch(path, opts);
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || res.statusText);
+                }
+                return res.json();
+            }
+
+            async function apiForm(method, path, formData, requiresAuth = true) {
+                const opts = {
+                    method,
+                    body: formData
+                };
+                if (requiresAuth && token) {
+                    opts.headers = { 'Authorization': `Bearer ${token}` };
+                }
+                const res = await fetch(path, opts);
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || res.statusText);
+                }
+                return res.json();
+            }
+
+            // ---------- AUTH ----------
+            function setToken(t) {
+                token = t;
+                if (t) localStorage.setItem('token', t);
+                else localStorage.removeItem('token');
+            }
+
+            function setUser(u) {
+                currentUser = u;
+                if (u) localStorage.setItem('user', JSON.stringify(u));
+                else localStorage.removeItem('user');
+            }
+
+            function getUser() {
+                if (currentUser) return currentUser;
+                const raw = localStorage.getItem('user');
+                if (raw) {
+                    try { currentUser = JSON.parse(raw); } catch (e) { currentUser = null; }
+                }
+                return currentUser;
+            }
+
+            function updateUI() {
+                const user = getUser();
+                const authBtns = $('auth-buttons');
+                const userMenu = $('user-menu');
+                if (user) {
+                    authBtns.style.display = 'none';
+                    userMenu.style.display = 'flex';
+                    $('username-display').textContent = user.username || user.email;
+                } else {
+                    authBtns.style.display = 'flex';
+                    userMenu.style.display = 'none';
+                }
+                // Admin link (optional) – show if admin
+                const adminBtn = document.getElementById('admin-btn');
+                if (user && user.is_admin) {
+                    if (!adminBtn) {
+                        const btn = document.createElement('button');
+                        btn.id = 'admin-btn';
+                        btn.textContent = '⚙️ Admin';
+                        btn.style.background = '#4a2a6a';
+                        btn.onclick = () => openAdmin();
+                        document.querySelector('.nav-right').appendChild(btn);
+                    }
+                } else if (adminBtn) {
+                    adminBtn.remove();
+                }
+            }
+
+            async function login(email, password) {
+                const data = await api('POST', '/api/auth/login', { email, password }, false);
+                setToken(data.token);
+                setUser(data.user);
+                updateUI();
+                closeModal(authModal);
+                loadThreads(activeTag);
+            }
+
+            async function register(username, email, password) {
+                const data = await api('POST', '/api/auth/register', { username, email, password }, false);
+                setToken(data.token);
+                setUser(data.user);
+                updateUI();
+                closeModal(authModal);
+                loadThreads(activeTag);
+            }
+
+            function logout() {
+                setToken(null);
+                setUser(null);
+                updateUI();
+                loadThreads(activeTag);
+            }
+
+            // ---------- MODAL HELPERS ----------
+            function openModal(el) {
+                el.classList.add('open');
+                el.style.display = 'flex';
+            }
+
+            function closeModal(el) {
+                el.classList.remove('open');
+                el.style.display = 'none';
+            }
+
+            // ---------- THREADS ----------
+            async function loadThreads(tag = 'all') {
+                activeTag = tag;
+                loading.style.display = 'block';
+                feed.innerHTML = '';
+                try {
+                    const url = tag === 'all' ? '/api/threads' : `/api/threads?tag=${encodeURIComponent(tag)}`;
+                    const threads = await api('GET', url);
+                    renderThreads(threads);
+                } catch (e) {
+                    feed.innerHTML = `<p style="color:#f88;">Error loading threads: ${e.message}</p>`;
+                }
+                loading.style.display = 'none';
+            }
+
+            function renderThreads(threads) {
+                feed.innerHTML = '';
+                if (!threads.length) {
+                    feed.innerHTML = '<p style="color:#666; text-align:center; padding:40px 0;">No threads yet. Start one!</p>';
+                    return;
+                }
+                threads.forEach(t => {
+                    const card = document.createElement('div');
+                    card.className = 'thread-card';
+                    const score = (t.upvotes || 0) - (t.downvotes || 0);
+                    card.innerHTML = `
+                        <h3>${escapeHtml(t.title)}</h3>
+                        <div class="excerpt">${escapeHtml(t.content.substring(0, 160))}</div>
+                        <div class="meta">
+                            <span>👤 ${t.author ? escapeHtml(t.author.username) : 'unknown'}</span>
+                            <span>🕒 ${new Date(t.created_at).toLocaleString()}</span>
+                            <span>💬 ${t.comment_count || 0}</span>
+                            <span>👍 ${score}</span>
+                            ${t.is_pinned ? '📌' : ''}
+                        </div>
+                    `;
+                    card.addEventListener('click', () => openThread(t.id));
+                    feed.appendChild(card);
+                });
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ---------- CREATE THREAD ----------
+            async function createThread(title, content, tags) {
+                const fd = new FormData();
+                fd.append('title', title);
+                fd.append('content', content);
+                if (tags) fd.append('tags', tags);
+                await apiForm('POST', '/api/threads', fd);
+                closeModal(threadModal);
+                loadThreads(activeTag);
+            }
+
+            // ---------- THREAD VIEW ----------
+            async function openThread(threadId) {
+                currentThreadId = threadId;
+                try {
+                    const [thread, comments] = await Promise.all([
+                        api('GET', `/api/threads/${threadId}`),
+                        api('GET', `/api/threads/${threadId}/comments/tree`)
+                    ]);
+                    const score = (thread.upvotes || 0) - (thread.downvotes || 0);
+                    $('thread-view-content').innerHTML = `
+                        <h2>${escapeHtml(thread.title)}</h2>
+                        <div class="thread-body">${escapeHtml(thread.content)}</div>
+                        <div class="thread-meta">
+                            <span>👤 ${thread.author ? escapeHtml(thread.author.username) : 'unknown'}</span>
+                            <span>🕒 ${new Date(thread.created_at).toLocaleString()}</span>
+                            <span>👍 ${score}</span>
+                            <span>💬 ${thread.comment_count || 0}</span>
+                            ${thread.is_pinned ? '📌' : ''}
+                            ${thread.is_locked ? '🔒 Locked' : ''}
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="vote-btn" data-target="thread" data-id="${thread.id}" data-value="1">👍</button>
+                            <button class="vote-btn" data-target="thread" data-id="${thread.id}" data-value="-1">👎</button>
+                            <button id="bookmark-btn" data-id="${thread.id}">🔖 Bookmark</button>
+                            <button id="report-btn" data-target="thread" data-id="${thread.id}">🚨 Report</button>
+                        </div>
+                    `;
+                    renderCommentTree(comments);
+                    // Set parent_id untuk comment baru = null
+                    $('comment-form').dataset.parentId = '';
+                    $('reply-indicator').textContent = '';
+                    openModal(threadViewModal);
+                } catch (e) {
+                    alert('Error loading thread: ' + e.message);
+                }
+            }
+
+            // ---------- COMMENTS ----------
+            function renderCommentTree(comments, container = $('comment-tree')) {
+                container.innerHTML = '';
+                if (!comments.length) {
+                    container.innerHTML = '<p style="color:#666;">No comments yet.</p>';
+                    return;
+                }
+                comments.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'comment';
+                    const score = (c.upvotes || 0) - (c.downvotes || 0);
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            <strong>${escapeHtml(c.user_id)}</strong>
+                            <span>${new Date(c.created_at).toLocaleString()}</span>
+                            <span>👍 ${score}</span>
+                            ${c.is_deleted ? ' [deleted]' : ''}
+                        </div>
+                        <div class="comment-body">${c.is_deleted ? '<em>deleted</em>' : escapeHtml(c.content)}</div>
+                        <div class="comment-actions">
+                            <button class="reply-btn" data-id="${c.id}">Reply</button>
+                            <button class="vote-btn" data-target="comment" data-id="${c.id}" data-value="1">👍</button>
+                            <button class="vote-btn" data-target="comment" data-id="${c.id}" data-value="-1">👎</button>
+                            <button class="report-btn" data-target="comment" data-id="${c.id}">🚨</button>
+                        </div>
+                    `;
+                    if (c.replies && c.replies.length) {
+                        const repliesDiv = document.createElement('div');
+                        repliesDiv.className = 'replies';
+                        renderCommentTree(c.replies, repliesDiv);
+                        div.appendChild(repliesDiv);
+                    }
+                    container.appendChild(div);
+                });
+                // Attach events
+                container.querySelectorAll('.reply-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        $('comment-form').dataset.parentId = btn.dataset.id;
+                        $('reply-indicator').textContent = `Replying to comment ${btn.dataset.id}`;
+                        $('comment-content').focus();
+                    });
+                });
+                container.querySelectorAll('.vote-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const target = btn.dataset.target;
+                        const id = btn.dataset.id;
+                        const value = parseInt(btn.dataset.value);
+                        try {
+                            const fd = new FormData();
+                            fd.append('target_type', target);
+                            fd.append('target_id', id);
+                            fd.append('value', value);
+                            await apiForm('POST', '/api/votes', fd);
+                            // Refresh thread view
+                            openThread(currentThreadId);
+                        } catch (e) {
+                            alert(e.message);
+                        }
+                    });
+                });
+                container.querySelectorAll('.report-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const target = btn.dataset.target;
+                        const id = btn.dataset.id;
+                        const reason = prompt('Reason for reporting:');
+                        if (!reason) return;
+                        try {
+                            const fd = new FormData();
+                            fd.append('target_type', target);
+                            fd.append('target_id', id);
+                            fd.append('reason', reason);
+                            await apiForm('POST', '/api/reports', fd);
+                            alert('Report submitted.');
+                        } catch (e) {
+                            alert(e.message);
+                        }
+                    });
+                });
+            }
+
+            async function postComment(threadId, content, parentId = null) {
+                const fd = new FormData();
+                fd.append('content', content);
+                if (parentId) fd.append('parent_id', parentId);
+                await apiForm('POST', `/api/threads/${threadId}/comments`, fd);
+                // Refresh
+                openThread(threadId);
+            }
+
+            // ---------- VOTING (thread level) ----------
+            async function vote(targetType, targetId, value) {
+                const fd = new FormData();
+                fd.append('target_type', targetType);
+                fd.append('target_id', targetId);
+                fd.append('value', value);
+                await apiForm('POST', '/api/votes', fd);
+            }
+
+            // ---------- BOOKMARK ----------
+            async function toggleBookmark(threadId) {
+                // check if already bookmarked? We'll just try to add, if error 400 it's already there
+                try {
+                    await api('POST', `/api/bookmarks/${threadId}`);
+                    alert('Bookmarked!');
+                } catch (e) {
+                    if (e.message.includes('Already bookmarked')) {
+                        // try to remove
+                        try {
+                            await api('DELETE', `/api/bookmarks/${threadId}`);
+                            alert('Bookmark removed.');
+                        } catch (e2) {
+                            alert(e2.message);
+                        }
+                    } else {
+                        alert(e.message);
+                    }
+                }
+            }
+
+            // ---------- FOLLOW ----------
+            async function followUser(userId) {
+                try {
+                    await api('POST', `/api/users/${userId}/follow`);
+                    alert('Followed!');
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            async function unfollowUser(userId) {
+                try {
+                    await api('DELETE', `/api/users/${userId}/follow`);
+                    alert('Unfollowed.');
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            // ---------- NOTIFICATIONS ----------
+            async function loadNotifications() {
+                try {
+                    const notifs = await api('GET', '/api/notifications');
+                    const list = $('notif-list');
+                    list.innerHTML = '';
+                    if (!notifs.length) {
+                        list.innerHTML = '<p style="color:#666;">No notifications.</p>';
+                        return;
+                    }
+                    notifs.forEach(n => {
+                        const div = document.createElement('div');
+                        div.className = 'notif-item' + (n.is_read ? '' : ' unread');
+                        div.innerHTML = `
+                            <span>${escapeHtml(n.message)}</span>
+                            <span class="notif-time">${new Date(n.created_at).toLocaleString()}</span>
+                        `;
+                        if (!n.is_read) {
+                            div.addEventListener('click', async () => {
+                                await api('PUT', `/api/notifications/${n.id}/read`);
+                                loadNotifications();
+                            });
+                        }
+                        list.appendChild(div);
+                    });
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            async function markAllNotificationsRead() {
+                try {
+                    await api('PUT', '/api/notifications/read-all');
+                    loadNotifications();
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            // ---------- MESSAGES ----------
+            async function loadConversations() {
+                try {
+                    const convs = await api('GET', '/api/messages/conversations');
+                    const container = $('msg-conversations');
+                    container.innerHTML = '';
+                    if (!convs.length) {
+                        container.innerHTML = '<p style="color:#666;">No conversations.</p>';
+                        return;
+                    }
+                    convs.forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'msg-item';
+                        const last = c.last_message ? new Date(c.last_message.created_at).toLocaleString() : '';
+                        div.innerHTML = `
+                            <strong>${escapeHtml(c.user.username)}</strong>
+                            ${c.unread_count ? ` <span style="background:#00bfff; padding:0 8px; border-radius:10px; color:#000;">${c.unread_count}</span>` : ''}
+                            <span class="msg-time">${last}</span>
+                            <div style="font-size:0.85rem; color:#888;">${c.last_message ? escapeHtml(c.last_message.content.substring(0, 60)) : ''}</div>
+                        `;
+                        div.addEventListener('click', () => openChat(c.user.id));
+                        container.appendChild(div);
+                    });
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            async function openChat(userId) {
+                msgTargetUserId = userId;
+                try {
+                    const msgs = await api('GET', `/api/messages/${userId}`);
+                    const container = $('msg-messages');
+                    container.innerHTML = '';
+                    msgs.forEach(m => {
+                        const div = document.createElement('div');
+                        div.style.padding = '4px 0';
+                        div.style.borderBottom = '1px solid #1a1a2a';
+                        const sender = m.sender_id === (currentUser ? currentUser.id : '') ? 'You' : 'Other';
+                        div.innerHTML = `
+                            <span style="font-weight:500;">${sender}:</span>
+                            ${escapeHtml(m.content)}
+                            <span style="float:right;font-size:0.7rem;color:#666;">${new Date(m.created_at).toLocaleString()}</span>
+                        `;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                    $('msg-chat').style.display = 'block';
+                    $('msg-conversations').style.display = 'none';
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            async function sendMessage(receiverId, content) {
+                const fd = new FormData();
+                fd.append('receiver_id', receiverId);
+                fd.append('content', content);
+                await apiForm('POST', '/api/messages', fd);
+                openChat(receiverId);
+            }
+
+            // ---------- ADMIN ----------
+            async function openAdmin() {
+                try {
+                    const stats = await api('GET', '/api/admin/stats');
+                    $('admin-stats').innerHTML = `
+                        <p>Users: ${stats.total_users}</p>
+                        <p>Threads: ${stats.total_threads}</p>
+                        <p>Comments: ${stats.total_comments}</p>
+                    `;
+                    // Load reports
+                    const reports = await api('GET', '/api/reports');
+                    const container = $('admin-reports');
+                    container.innerHTML = '<h4>Reports</h4>';
+                    if (!reports.length) {
+                        container.innerHTML += '<p>No reports.</p>';
+                    } else {
+                        const ul = document.createElement('ul');
+                        reports.forEach(r => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                ${r.target_type} (${r.target_id}) - ${r.reason} 
+                                <span style="color:${r.status === 'pending' ? '#ffaa00' : '#66cc66'};">${r.status}</span>
+                                <button class="admin-resolve" data-id="${r.id}" data-status="reviewed">✓</button>
+                                <button class="admin-resolve" data-id="${r.id}" data-status="dismissed">✗</button>
+                            `;
+                            ul.appendChild(li);
+                        });
+                        container.appendChild(ul);
+                        container.querySelectorAll('.admin-resolve').forEach(btn => {
+                            btn.addEventListener('click', async () => {
+                                const fd = new FormData();
+                                fd.append('status', btn.dataset.status);
+                                await apiForm('PUT', `/api/reports/${btn.dataset.id}`, fd);
+                                openAdmin();
+                            });
+                        });
+                    }
+                    openModal(adminModal);
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            // ---------- SEARCH ----------
+            let searchTimeout;
+            async function search(query) {
+                if (query.length < 2) {
+                    loadThreads(activeTag);
+                    return;
+                }
+                try {
+                    const results = await api('GET', `/api/search?q=${encodeURIComponent(query)}`);
+                    renderThreads(results.threads);
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+
+            // ---------- EVENT BINDING ----------
+            document.addEventListener('DOMContentLoaded', () => {
+                // Restore session
+                const storedToken = localStorage.getItem('token');
+                if (storedToken) {
+                    token = storedToken;
+                    api('GET', '/api/auth/me').then(user => {
+                        setUser(user);
+                        updateUI();
+                        loadThreads('all');
+                    }).catch(() => {
+                        setToken(null);
+                        setUser(null);
+                        updateUI();
+                        loadThreads('all');
+                    });
+                } else {
+                    updateUI();
+                    loadThreads('all');
+                }
+
+                // Auth modal
+                $('login-btn').onclick = () => {
+                    $('auth-title').textContent = 'Login';
+                    $('auth-extra').style.display = 'none';
+                    $('auth-submit').textContent = 'Login';
+                    openModal(authModal);
+                };
+                $('register-btn').onclick = () => {
+                    $('auth-title').textContent = 'Register';
+                    $('auth-extra').style.display = 'block';
+                    $('auth-submit').textContent = 'Register';
+                    openModal(authModal);
+                };
+                $('auth-toggle').onclick = (e) => {
+                    e.preventDefault();
+                    const isLogin = $('auth-title').textContent === 'Login';
+                    if (isLogin) {
+                        $('auth-title').textContent = 'Register';
+                        $('auth-extra').style.display = 'block';
+                        $('auth-submit').textContent = 'Register';
+                    } else {
+                        $('auth-title').textContent = 'Login';
+                        $('auth-extra').style.display = 'none';
+                        $('auth-submit').textContent = 'Login';
+                    }
+                };
+
+                $('auth-form').onsubmit = async (e) => {
+                    e.preventDefault();
+                    const email = $('auth-email').value;
+                    const password = $('auth-password').value;
+                    const isLogin = $('auth-title').textContent === 'Login';
+                    try {
+                        if (isLogin) {
+                            await login(email, password);
+                        } else {
+                            const username = $('auth-username').value;
+                            await register(username, email, password);
+                        }
+                    } catch (err) {
+                        alert('Auth error: ' + err.message);
+                    }
+                };
+
+                // Logout
+                $('logout-btn').onclick = logout;
+
+                // New thread
+                $('new-thread-btn').onclick = () => {
+                    if (!getUser()) {
+                        alert('Please login first.');
+                        return;
+                    }
+                    openModal(threadModal);
+                };
+                $('thread-form').onsubmit = async (e) => {
+                    e.preventDefault();
+                    const title = $('thread-title').value;
+                    const content = $('thread-content').value;
+                    const tags = $('thread-tags').value;
+                    try {
+                        await createThread(title, content, tags);
+                        $('thread-form').reset();
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                    }
+                };
+
+                // Comment form
+                $('comment-form').onsubmit = async (e) => {
+                    e.preventDefault();
+                    if (!currentThreadId) return;
+                    const content = $('comment-content').value;
+                    const parentId = $('comment-form').dataset.parentId || null;
+                    try {
+                        await postComment(currentThreadId, content, parentId);
+                        $('comment-content').value = '';
+                        $('comment-form').dataset.parentId = '';
+                        $('reply-indicator').textContent = '';
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                    }
+                };
+
+                // Sidebar tags
+                document.querySelectorAll('#sidebar li').forEach(li => {
+                    li.onclick = () => {
+                        document.querySelectorAll('#sidebar li').forEach(l => l.classList.remove('active'));
+                        li.classList.add('active');
+                        loadThreads(li.dataset.tag);
+                    };
+                });
+
+                // Search
+                $('search-input').oninput = () => {
+                    clearTimeout(searchTimeout);
+                    const q = $('search-input').value.trim();
+                    searchTimeout = setTimeout(() => search(q), 300);
+                };
+
+                // Modals close
+                document.querySelectorAll('[data-close]').forEach(el => {
+                    el.onclick = () => {
+                        const id = el.dataset.close;
+                        const modal = document.getElementById(id);
+                        if (modal) closeModal(modal);
+                    };
+                });
+                // Click outside modal to close
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeModal(modal);
+                    });
+                });
+
+                // Notifications
+                $('notif-btn').onclick = () => {
+                    if (!getUser()) { alert('Login first.'); return; }
+                    loadNotifications();
+                    openModal(notifModal);
+                };
+                $('mark-all-read').onclick = markAllNotificationsRead;
+
+                // Messages
+                $('msg-btn').onclick = () => {
+                    if (!getUser()) { alert('Login first.'); return; }
+                    $('msg-chat').style.display = 'none';
+                    $('msg-conversations').style.display = 'block';
+                    loadConversations();
+                    openModal(msgModal);
+                };
+                $('msg-form').onsubmit = async (e) => {
+                    e.preventDefault();
+                    if (!msgTargetUserId) return;
+                    const content = $('msg-input').value.trim();
+                    if (!content) return;
+                    try {
+                        await sendMessage(msgTargetUserId, content);
+                        $('msg-input').value = '';
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                };
+                $('msg-back').onclick = () => {
+                    $('msg-chat').style.display = 'none';
+                    $('msg-conversations').style.display = 'block';
+                    loadConversations();
+                };
+
+                // Global vote buttons (delegated)
+                document.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('vote-btn')) {
+                        const btn = e.target;
+                        const target = btn.dataset.target;
+                        const id = btn.dataset.id;
+                        const value = parseInt(btn.dataset.value);
+                        try {
+                            const fd = new FormData();
+                            fd.append('target_type', target);
+                            fd.append('target_id', id);
+                            fd.append('value', value);
+                            await apiForm('POST', '/api/votes', fd);
+                            // Refresh current view if in thread view
+                            if (currentThreadId && threadViewModal.classList.contains('open')) {
+                                openThread(currentThreadId);
+                            } else {
+                                loadThreads(activeTag);
+                            }
+                        } catch (err) {
+                            alert(err.message);
+                        }
+                    }
+                    // Bookmark (delegated)
+                    if (e.target.id === 'bookmark-btn') {
+                        const id = e.target.dataset.id;
+                        if (id) await toggleBookmark(id);
+                    }
+                    // Report (delegated) for thread
+                    if (e.target.id === 'report-btn') {
+                        const target = e.target.dataset.target;
+                        const id = e.target.dataset.id;
+                        const reason = prompt('Reason for reporting:');
+                        if (!reason) return;
+                        try {
+                            const fd = new FormData();
+                            fd.append('target_type', target);
+                            fd.append('target_id', id);
+                            fd.append('reason', reason);
+                            await apiForm('POST', '/api/reports', fd);
+                            alert('Report submitted.');
+                        } catch (err) {
+                            alert(err.message);
+                        }
+                    }
+                });
+            });
+
+        })();
+    </script>
+</body>
+  </html>
